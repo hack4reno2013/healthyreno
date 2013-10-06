@@ -11,7 +11,8 @@ var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function callback () {
 	
-	var query = Street.find({'name': '8TH ST'});
+	//var query = Street.find({'name': '1ST ST'});
+	var query = Street.find().limit(10);
 	
  	query.exec(function (err, streets) {
 	  if (err) return handleError(err);
@@ -22,7 +23,7 @@ db.once('open', function callback () {
 					
 					console.log(fields);
 					
-					var p = new Parcel();
+ 					var p = new Parcel();
 					p.id = fields.id;
 					p.num = fields.num.val;
 					p.sub = fields.sub.val;
@@ -129,8 +130,9 @@ function parseParcel(parcel, callback) {
 							case 3:
 								fields.num.count++;
 								if(fields.num.count == 3) {
-									if(_.isNumber(text))
-										fields.num.val = text.match(/\d+/i)[0];
+
+									fields.num.val = text.match(/\d+/i)[0];
+									//if(!_.isNull(text.match(/\d+/i)[0]))
 								}
 							break;
 							case 4:
