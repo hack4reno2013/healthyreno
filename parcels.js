@@ -22,27 +22,26 @@ db.once('open', function callback () {
 					
 					console.log(fields);
 					
-/*  					Parcel.findOne({id: fields.id}, function(err, p){
-					    p.id = fields.id;
-						p.num = fields.num;
-						p.sub = fields.sub;
-						p.gid = fields.gid;
-						p.spa = fields.spa;
-						p.soi = fields.soi;
-						p.city = fields.city;
-						p.neighborhood = fields.neighborhood;
-						p.ward = fields.ward;
-						p.zone = fields.zone;
-						p.elem = fields.elem;
-						p.mid = fields.mid;
-						p.high = fields.high;
-						p.vote = fields.vote;
-						p.zip = fields.zip;
+					var p = new Parcel();
+					p.id = fields.id;
+					p.num = fields.num.val;
+					p.sub = fields.sub.val;
+					p.gid = fields.gid.val;
+					p.spa = fields.spa.val;
+					p.soi = fields.soi.val;
+					p.city = fields.city.val;
+					p.neighborhood = fields.neighborhood.val;
+					p.ward = fields.ward.val;
+					p.zone = fields.zone.val;
+					p.elem = fields.elem.val;
+					p.mid = fields.mid.val;
+					p.high = fields.high.val;
+					p.vote = fields.vote.val;
+					p.zip = fields.zip.val;
 						
-						p.save(function(err, p){
-							console.log(p);
-						});
-					}); */
+					p.save(function(err, p){
+						console.log(p);
+					});
 				});
 			});
 		});
@@ -204,7 +203,6 @@ function parseParcel(parcel, callback) {
 								fields.zip.count++;
 								if(fields.zip.count == 3) {
 									fields.zip.val = text;
-									delete fields.num;
 									callback(fields);
 								}
 							break;
