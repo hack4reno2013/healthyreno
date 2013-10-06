@@ -5,50 +5,114 @@ mongoose.connect('mongodb://localhost/test');
 var htmlparser = require("htmlparser2");
 
 var Street = require('./schema/street.js');
+var Parcel = require('./schema/parcel.js');
 
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function callback () {
 	
-	var query = Street.find().limit(6);
-	//var query = Street.find({name: '8TH ST'});
+	var query = Street.find({'name': '8TH ST'});
 	
  	query.exec(function (err, streets) {
 	  if (err) return handleError(err);
 	  _.each(streets, function(street, k) {
-		console.log(street);
-		_.each(street.parcels, function(parcel, k) {
-			console.log(parcel);
- 			getParcel(parcel, function(parcel) {
+		_.each(street.parcels, function(id, k) {
+ 			getParcel(id, function(parcel) {
 				parseParcel(parcel, function(fields) {
+					
 					console.log(fields);
-				});	
-			});	
+					
+/*  					Parcel.findOne({id: fields.id}, function(err, p){
+					    p.id = fields.id;
+						p.num = fields.num;
+						p.sub = fields.sub;
+						p.gid = fields.gid;
+						p.spa = fields.spa;
+						p.soi = fields.soi;
+						p.city = fields.city;
+						p.neighborhood = fields.neighborhood;
+						p.ward = fields.ward;
+						p.zone = fields.zone;
+						p.elem = fields.elem;
+						p.mid = fields.mid;
+						p.high = fields.high;
+						p.vote = fields.vote;
+						p.zip = fields.zip;
+						
+						p.save(function(err, p){
+							console.log(p);
+						});
+					}); */
+				});
+			});
 		});
 	  });
 	});
 });
 
 function parseParcel(parcel, callback) {
+
 			var table = 0;
 			var row = 0;
 			//fields
 			var fields = {};
-			fields.num = 0;
-			fields.sub = 0;
-			fields.gid = 0;
-			fields.spa = 0;
-			fields.soi = 0;
-			fields.hospital = 0;
-			fields.city = 0;
-			fields.neighborhood = 0;
-			fields.ward = 0;
-			fields.zone = 0;
-			fields.elem = 0;
-			fields.mid = 0;
-			fields.high = 0;
-			fields.vote = 0;
-			fields.zip = 0;
+			fields.id = parcel.id;
+			
+			fields.num = {};
+			fields.num.count = 0;
+			fields.num.val = '';
+			
+			fields.sub = {};
+			fields.sub.count = 0;
+			fields.sub.val = '';
+			
+			fields.gid = {};
+			fields.gid.count = 0;
+			fields.gid.val = '';
+			
+			fields.spa = {};
+			fields.spa.count = 0;
+			fields.spa.val = '';
+			
+			fields.soi = {};
+			fields.soi.count = 0;
+			fields.soi.val = '';
+			
+			fields.city = {};
+			fields.city.count = 0;
+			fields.city.val = '';
+			
+			fields.neighborhood = {};
+			fields.neighborhood.count = 0;
+			fields.city.val = '';
+			
+			fields.ward = {};
+			fields.ward.count = 0;
+			fields.ward.val = '';
+			
+			fields.zone = {};
+			fields.zone.count = 0;
+			fields.zone.val = '';
+			
+			fields.elem = {};
+			fields.elem.count = 0;
+			fields.elem.val = '';
+			
+			fields.mid = {};
+			fields.mid.count = 0;
+			fields.mid.val = '';
+			
+			fields.high = {};
+			fields.high.count = 0;
+			fields.high.val = '';
+			
+			fields.vote = {};
+			fields.vote.count = 0;
+			fields.vote.val = '';
+			
+			fields.zip = {};
+			fields.zip.count = 0;
+			fields.zip.val = '';
 			
 			var parser = new htmlparser.Parser({
 				onopentag: function(name, attribs){
@@ -64,85 +128,91 @@ function parseParcel(parcel, callback) {
 					if(table == 1) {
 						switch(row) {
 							case 3:
-								fields.num++;
-								if(fields.num == 3)
-									console.log('Street # ', text.match(/\d+/i)[0])
+								fields.num.count++;
+								if(fields.num.count == 3) {
+									if(_.isNumber(text))
+										fields.num.val = text.match(/\d+/i)[0];
+								}
 							break;
 							case 4:
-								fields.sub++;
-								if(fields.sub == 5)
-									console.log(text)
+								fields.sub.count++;
+
+								if(fields.sub.count == 5) {
+									fields.sub.val = text;
+								}
 							break;
 							case 5:
-								fields.city++;
-								if(fields.city == 3)
-									console.log(text);
+								fields.city.count++;
+								if(fields.city.count == 3)
+									fields.city.val = text;
 							break;
 							case 6:
-								fields.gid++;
-								if(fields.gid == 3)
-									console.log(text);
+								fields.gid.count++;
+								if(fields.gid.count == 3)
+									fields.gid.val = text;
 							break;
 							case 7:
-								fields.spa++;
-								if(fields.spa == 3)
-									console.log(text);
+								fields.spa.count++;
+								if(fields.spa.count == 3)
+									fields.spa.val = text;
 							
 							break;
 							case 8:
-								fields.soi++;
-								if(fields.soi == 3)
-									console.log(text);
+								fields.soi.count++;
+								if(fields.soi.count == 3)
+									fields.soi.val = text;
 							break;
 							case 9:
-								fields.neighborhood++;
-								if(fields.neighborhood == 3)
-									console.log(text);
+								fields.neighborhood.count++;
+								if(fields.neighborhood.count == 3)
+									fields.neighborhood.val = text;
 							break;
 							case 10:
-								fields.ward++;
-								if(fields.ward == 5)
-									console.log(text);
+								fields.ward.count++;
+								if(fields.ward.count == 5) {
+									fields.ward.val = text;
+								}
 							break;
 							case 11:
-								fields.zone++;
-								if(fields.zone == 3)
-									console.log(text);
+								fields.zone.count++;
+								if(fields.zone.count == 3)
+									fields.zone.val = text;
 							break;
 							case 12:
-								fields.elem++;
-								if(fields.elem == 3)
-									console.log(text);
+								fields.elem.count++;
+								if(fields.elem.count == 3)
+									fields.elem.val = text;
 							break;
 							case 13:
-								fields.mid++;
-								if(fields.mid ==3)
-									console.log(text);					
+								fields.mid.count++;
+								if(fields.mid.count == 3)
+									fields.mid.val = text;				
 							break;
 							case 14:
-								fields.high++;
-								if(fields.high == 3)
-									console.log(text);
+								fields.high.count++;
+								if(fields.high.count == 3)
+									fields.high.val = text;
 							
 							break;
 							case 15:
-								fields.vote++;
-								if(fields.vote == 3)
-									console.log(text);
+								fields.vote.count++;
+								if(fields.vote.count == 3)
+									fields.vote.val = text;
 							
 							break;
 							case 16:
-								fields.zip++;
-								if(fields.zip == 3) {
-									console.log(text);
-									callback();
+								fields.zip.count++;
+								if(fields.zip.count == 3) {
+									fields.zip.val = text;
+									delete fields.num;
+									callback(fields);
 								}
 							break;
 						}
 					}
 				}
 			});
-			parser.write(parcel);
+			parser.write(parcel.data);
 			parser.end();
 }
 
@@ -151,20 +221,22 @@ var options = {
   port: 80
 };
 
-function getParcel(parcel, callback) {
+function getParcel(id, callback) {
 	
 	//http://maps.cityofreno.net/parceldetails.cfm?searchtype=parcel&searchvalue=518-643-20
-	options.path = "/parceldetails.cfm?searchtype=parcel&searchvalue="+parcel+""
+	options.path = "/parceldetails.cfm?searchtype=parcel&searchvalue="+id+""
 
-	var result = '';
+	var parcel = {};
+	parcel.id = id;
+	parcel.data = '';
+	
 	var req = http.request(options, function(res) {
 		res.on('data', function (chunk) {
-			result += chunk;
+			parcel.data += chunk;
 		});
 	  
 		res.on('end', function(){
-			callback(result);
-			
+			callback(parcel);
 		});
 	});
 
