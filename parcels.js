@@ -3,52 +3,104 @@ var _ = require ('underscore');
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/test');
 var htmlparser = require("htmlparser2");
+var querystring = require('querystring');
 
 var Street = require('./schema/street.js');
 var Parcel = require('./schema/parcel.js');
+
 
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function callback () {
 	
-	//var query = Street.find({'name': '1ST ST'});
-	var query = Street.find().limit(10);
+	//retrieveParcel();
+	
+	populateParcels(function(){
+		normalizeParcels();
+	});
+	
+	
+
+});
+
+function retrieveParcel() {
+	var query = Parcel.find({num: '322', name: 'CLAY ST'});
+	query.exec(function (err, parcel) {
+		if (err) return handleError(err);
+		
+		console.log(parcel);
+	});
+	
+}
+
+function normalizeParcels() {
+	console.log('done');
+/* 
+	var query = Street.find({name: 'CLAY ST'});
 	
  	query.exec(function (err, streets) {
 	  if (err) return handleError(err);
 	  _.each(streets, function(street, k) {
-		_.each(street.parcels, function(id, k) {
- 			getParcel(id, function(parcel) {
-				parseParcel(parcel, function(fields) {
-					
-					console.log(fields);
-					
- 					var p = new Parcel();
-					p.id = fields.id;
-					p.num = fields.num.val;
-					p.sub = fields.sub.val;
-					p.gid = fields.gid.val;
-					p.spa = fields.spa.val;
-					p.soi = fields.soi.val;
-					p.city = fields.city.val;
-					p.neighborhood = fields.neighborhood.val;
-					p.ward = fields.ward.val;
-					p.zone = fields.zone.val;
-					p.elem = fields.elem.val;
-					p.mid = fields.mid.val;
-					p.high = fields.high.val;
-					p.vote = fields.vote.val;
-					p.zip = fields.zip.val;
-						
-					p.save(function(err, p){
+			_.each(street.parcels, function(id, k) {
+				var query2 = Parcel.find({ID: id});
+				query2.exec(function (err, parcel) {
+					if (err) return handleError(err);
+					street.parcels[k] = mongoose.Types.ObjectId(parcel._id);
+					street.markModified('parcels');
+					street.save(function(err, p) {
 						console.log(p);
+					});
+				});
+			});
+		});
+	}); */
+}
+
+function populateParcels(callback) {
+
+	var query = Street.find().limit(10);
+	var l = 0;
+	var c = -1;
+	
+ 	query.exec(function (err, streets) {
+	  if (err) return handleError(err);
+	  l = streets.length;
+	  _.each(streets, function(street, k) {
+		getParcels(street.name, function(parcels){
+			_.each(parcels, function(id, k) {
+				getParcel(id, function(parcel) {
+					parseParcel(parcel, function(fields) {
+						var p = new Parcel();
+						p.ID = fields.id;
+						p.street = fields.street.val;
+						p.num = fields.num.val;
+						p.sub = fields.sub.val;
+						p.gid = fields.gid.val;
+						p.spa = fields.spa.val;
+						p.soi = fields.soi.val;
+						p.city = fields.city.val;
+						p.neighborhood = fields.neighborhood.val;
+						p.ward = fields.ward.val;
+						p.zone = fields.zone.val;
+						p.elem = fields.elem.val;
+						p.mid = fields.mid.val;
+						p.high = fields.high.val;
+						p.vote = fields.vote.val;
+						p.zip = fields.zip.val;
+							
+						p.save(function(err, p){
+							console.log(p);
+							c++;
+							if(l == c)
+								callback();
+						});
 					});
 				});
 			});
 		});
 	  });
 	});
-});
+}
 
 function parseParcel(parcel, callback) {
 
@@ -61,6 +113,10 @@ function parseParcel(parcel, callback) {
 			fields.num = {};
 			fields.num.count = 0;
 			fields.num.val = '';
+			
+			fields.street = {};
+			fields.street.count = 0;
+			fields.street.val = '';
 			
 			fields.sub = {};
 			fields.sub.count = 0;
@@ -130,9 +186,14 @@ function parseParcel(parcel, callback) {
 							case 3:
 								fields.num.count++;
 								if(fields.num.count == 3) {
-
-									fields.num.val = text.match(/\d+/i)[0];
-									//if(!_.isNull(text.match(/\d+/i)[0]))
+									var t = text.match(/\d+/i);
+									var s = text.match(/[^ \d+].*/);
+									
+									if(!_.isNull(t)) {
+										fields.num.val = t[0];
+										fields.street.val = s[0];
+									}
+									
 								}
 							break;
 							case 4:
@@ -171,7 +232,11 @@ function parseParcel(parcel, callback) {
 							case 10:
 								fields.ward.count++;
 								if(fields.ward.count == 5) {
-									fields.ward.val = text;
+									if(text == '\r\n   \t    ') {
+										fields.ward.val = 'N/A';
+									}else{
+										fields.ward.val = text;
+									}
 								}
 							break;
 							case 11:
@@ -204,8 +269,15 @@ function parseParcel(parcel, callback) {
 							case 16:
 								fields.zip.count++;
 								if(fields.zip.count == 3) {
-									fields.zip.val = text;
-									callback(fields);
+									fields.zip.val = parseInt(text);
+									
+										var query = Street.findOne({name: fields.street.val});
+										query.exec(function (err, street) {
+											if (err) return handleError(err);
+											fields.street.val = street;
+											callback(fields);
+										});
+									
 								}
 							break;
 						}
@@ -224,7 +296,7 @@ var options = {
 function getParcel(id, callback) {
 	
 	//http://maps.cityofreno.net/parceldetails.cfm?searchtype=parcel&searchvalue=518-643-20
-	options.path = "/parceldetails.cfm?searchtype=parcel&searchvalue="+id+""
+	options.path = "/parceldetails.cfm?searchtype=parcel&searchvalue="+id+"";
 
 	var parcel = {};
 	parcel.id = id;
@@ -250,7 +322,7 @@ function getParcel(id, callback) {
 function getParcels(street, callback) {
 	
 	//http://maps.cityofreno.net/stadrsearch.cfm?searchtype=street&searchvalue=ABACUS%20CT
-	options.path = "/stadrsearch.cfm?searchtype=street&searchvalue="+querystring.escape(street.name)+""
+	options.path = "/stadrsearch.cfm?searchtype=street&searchvalue="+querystring.escape(street)+"";
 	
 	var result = '';
 	var req = http.request(options, function(res) {

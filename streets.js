@@ -7,7 +7,7 @@ var csv = require('csv');
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/test');
 
-var Street = require('schema/street.js');
+var Street = require('./schema/street.js');
 
 function getStreets(callback) {
 	fs.readFile("csv/streets.csv", "utf-8", function(err, data) {

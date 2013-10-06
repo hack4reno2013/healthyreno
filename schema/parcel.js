@@ -1,7 +1,8 @@
 var mongoose = require('mongoose');
 
 var parcelSchema = mongoose.Schema({
-    id: String,
+    ID: String,
+	street:  mongoose.Schema.Types.ObjectId,
 	num: String,
 	sub: String,
 	gid: String,
